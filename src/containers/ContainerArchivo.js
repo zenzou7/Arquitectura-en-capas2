@@ -17,8 +17,9 @@ class ContenedorArchivo {
   }
 
   async getById(id) {
-    const objs = await this.ruta.getAll();
-    const buscado = objs.find((o) => o.id == id);
+    const objs = await fs.promises.readFile(this.ruta, 'utf-8');
+    const res = await JSON.parse(objs);
+    const buscado = res.find((o) => o.id == id);
 
     if (buscado) {
       return buscado;
@@ -30,22 +31,29 @@ class ContenedorArchivo {
   async save(obj) {
     console.log('entre');
     try {
-      const objs = await this.ruta.getAll();
+      const objs = await fs.promises.readFile(this.ruta, 'utf-8');
+      const res = await JSON.parse(objs);
       let id;
 
-      if (!objs || !objs.length) {
+      if (!res || !res.length) {
         id = 1;
       } else {
-        objs.forEach((o) => {
+        res.forEach((o) => {
           id = o.id;
         });
 
         id = id + 1;
       }
 
-      const guardar = objs && objs.length ? [...objs, { ...obj, id }] : [{ ...obj, id }];
+      const guardar = res && res.length ? [...res, { ...obj, id }] : [{ ...obj, id }];
 
-      await fs.writeFile(this.ruta, JSON.stringify(guardar), { encoding: 'utf-8' });
+      await fs.writeFile(this.ruta, JSON.stringify(guardar), (err) => {
+        if (err) {
+          console.log(err);
+        } else {
+          return console.log(`producto ${obj.name} agregado con el id ${obj.id}`);
+        }
+      });
       return 'Guardado con exito!';
     } catch (error) {
       console.log({ error });
